@@ -91,21 +91,58 @@ ul{list-style:none;margin:0;padding:0;background:var(--surface);border:1px solid
 li{display:flex;align-items:center;gap:6px;padding:6px 4px 6px 12px;border-top:1px solid var(--line);min-height:58px}
 li:first-child{border-top:0}
 li label{flex:1;display:flex;align-items:center;gap:12px;min-width:0;cursor:pointer;min-height:46px;-webkit-user-select:none;user-select:none}
-li input[type=checkbox]{appearance:none;-webkit-appearance:none;width:28px;height:28px;flex:none;border:2px solid var(--muted);border-radius:8px;display:grid;place-items:center;margin:0;cursor:pointer;transition:background .15s,border-color .15s}
-li input[type=checkbox]::after{content:"";width:7px;height:14px;border:solid var(--accent-ink);border-width:0 3px 3px 0;transform:rotate(45deg) translate(-1px,-1px) scale(0);transition:transform .15s}
+li{position:relative;transition:background-color .3s}
+li input[type=checkbox]{appearance:none;-webkit-appearance:none;width:28px;height:28px;flex:none;border:2px solid var(--muted);border-radius:8px;display:grid;place-items:center;margin:0;cursor:pointer;transition:background .2s,border-color .2s,transform .12s}
+li input[type=checkbox]:active{transform:scale(.88)}
+li input[type=checkbox]::after{content:"";width:7px;height:14px;border:solid var(--accent-ink);border-width:0 3px 3px 0;transform:rotate(45deg) translate(-1px,-1px) scale(0);transition:transform .25s cubic-bezier(.3,1.8,.5,1)}
 li input[type=checkbox]:checked{background:var(--accent);border-color:var(--accent)}
 li input[type=checkbox]:checked::after{transform:rotate(45deg) translate(-1px,-1px) scale(1)}
-.name{overflow-wrap:anywhere;font-weight:500}
-li.done .name{color:var(--done);text-decoration:line-through}
-.qty{display:flex;align-items:center;border:1.5px solid var(--line);border-radius:12px;flex:none}
-.qty button{width:40px;height:40px;border:0;background:transparent;font-size:1.3rem;font-weight:700;color:var(--accent);border-radius:10px}
-.qty button:active{background:var(--line)}
-.qty button:disabled{color:var(--done);cursor:default}
-.qty output{min-width:24px;text-align:center;font-variant-numeric:tabular-nums;font-weight:700}
+li.pop input[type=checkbox]{animation:pop .4s cubic-bezier(.3,1.6,.5,1)}
+@keyframes pop{0%{transform:scale(1)}35%{transform:scale(1.28) rotate(-6deg)}100%{transform:scale(1)}}
+li.pop::before{content:"";position:absolute;left:26px;top:50%;width:28px;height:28px;margin:-14px 0 0 -14px;border-radius:50%;border:3px solid var(--accent);animation:ring .5s ease-out forwards;pointer-events:none}
+@keyframes ring{from{transform:scale(.6);opacity:.9}to{transform:scale(2.2);opacity:0}}
+li.pop{animation:flash .6s ease-out}
+@keyframes flash{0%{background:color-mix(in srgb,var(--accent) 16%,var(--surface))}100%{background:var(--surface)}}
+.name{min-width:0;font-weight:500;transition:color .3s}
+.name .txt{overflow-wrap:anywhere;background:linear-gradient(currentColor,currentColor) no-repeat 0 58%/0 2px;
+  -webkit-box-decoration-break:clone;box-decoration-break:clone;transition:background-size .35s ease}
+li.done .name{color:var(--done)}
+li.done .name .txt{background-size:100% 2px}
+.qty{display:flex;align-items:center;border:1.5px solid var(--line);border-radius:12px;flex:none;transition:opacity .3s}
+.qty button{width:40px;height:40px;border:0;background:transparent;font-size:1.3rem;font-weight:700;color:var(--accent);border-radius:10px;transition:transform .1s,background-color .15s}
+.qty button:active{background:var(--line);transform:scale(.85)}
+.qty button:disabled{color:var(--done);cursor:default;transform:none}
+.qty output{min-width:24px;text-align:center;font-variant-numeric:tabular-nums;font-weight:700;display:inline-block}
+.qty output.up{animation:up1 .3s cubic-bezier(.3,1.6,.5,1)}
+.qty output.down{animation:dn1 .3s cubic-bezier(.3,1.6,.5,1)}
+@keyframes up1{0%{transform:translateY(8px) scale(.7);opacity:.2}100%{transform:none;opacity:1}}
+@keyframes dn1{0%{transform:translateY(-8px) scale(.7);opacity:.2}100%{transform:none;opacity:1}}
 li.done .qty{opacity:.55}
-.more{border:0;background:transparent;color:var(--muted);width:36px;height:40px;border-radius:10px;flex:none;display:grid;place-items:center}
+.more{border:0;background:transparent;color:var(--muted);width:36px;height:40px;border-radius:10px;flex:none;display:grid;place-items:center;transition:transform .1s}
+.more:active{transform:scale(.85)}
 .more svg{width:20px;height:20px}
-.empty{color:var(--muted);text-align:center;padding:48px 0}
+li.enter{animation:enter .45s cubic-bezier(.2,1.2,.4,1)}
+@keyframes enter{from{opacity:0;transform:translateY(-10px) scale(.97);background:color-mix(in srgb,var(--tag) 45%,var(--surface))}
+  to{opacity:1;transform:none;background:var(--surface)}}
+.cat{animation:fadein .35s ease-out both}
+@keyframes fadein{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+.bump{animation:bump .35s cubic-bezier(.3,1.6,.5,1)}
+@keyframes bump{40%{transform:scale(1.18) rotate(-2deg)}}
+.count.bump{animation:bumpc .35s cubic-bezier(.3,1.6,.5,1)}
+@keyframes bumpc{0%{transform:rotate(-2deg)}40%{transform:scale(1.18) rotate(-6deg)}100%{transform:rotate(-2deg)}}
+.bar span.full{background:linear-gradient(90deg,var(--accent),var(--tag),var(--accent));background-size:200% 100%;animation:shine 1.6s linear infinite}
+@keyframes shine{to{background-position:-200% 0}}
+.empty{color:var(--muted);text-align:center;padding:48px 0;animation:fadein .35s ease-out both}
+.confetti{position:fixed;top:-12px;width:9px;height:14px;border-radius:2px;z-index:40;pointer-events:none}
+
+/* Telas grandes: categorias em duas colunas */
+@media (min-width:960px){
+  .wrap{max-width:1040px}
+  #list{columns:2;column-gap:20px}
+  .cat{break-inside:avoid;display:inline-block;width:100%;margin-top:0;padding-top:22px}
+  .addbar .wrap{max-width:520px}
+  li:hover{background:color-mix(in srgb,var(--accent) 5%,var(--surface))}
+}
 
 .addbar{position:fixed;left:0;right:0;bottom:0;z-index:6;background:var(--bg);border-top:1px solid var(--line);
   padding-top:10px;padding-bottom:calc(10px + env(safe-area-inset-bottom,0px));transition:background-color .25s}
@@ -272,38 +309,103 @@ function toast(msg,label,fn){
 
 /* ---------- Lista ---------- */
 const dots=`<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="12" cy="5" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="12" cy="19" r="2"/></svg>`;
+const reduced=matchMedia("(prefers-reduced-motion: reduce)");
+let freshIds=new Set();   // itens recém-adicionados (ganham animação de entrada)
+const catCounters={};     // contador "x/y" de cada categoria
+function replay(el,cls){el.classList.remove(cls);void el.offsetWidth;el.classList.add(cls)}
+
+/* Atualiza só os números do topo e das categorias, sem redesenhar a lista */
+function updateCounts(animate){
+  const done=items.filter(i=>i.done).length, total=items.length;
+  const cnt=$("count");cnt.textContent=`${done}/${total}`;
+  cnt.setAttribute("aria-label",`${done} de ${total} itens no carrinho`);
+  if(animate)replay(cnt,"bump");
+  const bar=$("bar");bar.style.width=total?(done/total*100)+"%":"0";
+  bar.classList.toggle("full",total>0&&done===total);
+  for(const c in catCounters){
+    const all=items.filter(i=>i.cat===c);
+    catCounters[c].textContent=`${all.filter(i=>i.done).length}/${all.length}`;
+  }
+  return total>0&&done===total;
+}
+
 function render(){
   const list=$("list");list.innerHTML="";
-  const done=items.filter(i=>i.done).length;
-  $("count").textContent=`${done}/${items.length}`;
-  $("count").setAttribute("aria-label",`${done} de ${items.length} itens no carrinho`);
-  $("bar").style.width=items.length?(done/items.length*100)+"%":"0";
-  let shown=0;
+  for(const k in catCounters)delete catCounters[k];
+  let shown=0,i=0;
   for(const c of cats){
-    const all=items.filter(i=>i.cat===c);
-    const vis=all.filter(i=>filter==="all"||(filter==="done"?i.done:!i.done)).sort((a,b)=>a.done-b.done);
+    const all=items.filter(it=>it.cat===c);
+    const vis=all.filter(it=>filter==="all"||(filter==="done"?it.done:!it.done)); // mantém a ordem original
     if(!vis.length)continue;shown+=vis.length;
-    const sec=document.createElement("section");sec.className="cat";
-    const h=document.createElement("h2");h.innerHTML=`<span></span><small>${all.filter(i=>i.done).length}/${all.length}</small>`;
-    h.firstChild.textContent=c;sec.appendChild(h);
+    const sec=document.createElement("section");sec.className="cat";sec.style.animationDelay=Math.min(i++*40,240)+"ms";
+    const h=document.createElement("h2");h.innerHTML=`<span></span><small></small>`;
+    h.firstChild.textContent=c;catCounters[c]=h.lastChild;sec.appendChild(h);
     const ul=document.createElement("ul");
-    for(const it of vis){
-      const li=document.createElement("li");if(it.done)li.className="done";
-      li.innerHTML=`<label><input type="checkbox" id="chk-${it.id}" ${it.done?"checked":""}><span class="name"></span></label>
-        <div class="qty"><button type="button" aria-label="Diminuir quantidade" ${it.qty<=1?"disabled":""}>−</button><output aria-live="polite">${it.qty}</output><button type="button" aria-label="Aumentar quantidade">+</button></div>
-        <button class="more" type="button">${dots}</button>`;
-      li.querySelector(".name").textContent=it.name;
-      li.querySelector(".more").setAttribute("aria-label",`Editar ${it.name}`);
-      li.querySelector("input").onchange=e=>{it.done=e.target.checked;buzz(it.done?15:8);save();render()};
-      const [m,p]=li.querySelectorAll(".qty button");
-      m.onclick=()=>{if(it.qty>1){it.qty--;buzz(5);save();render()}};
-      p.onclick=()=>{it.qty++;buzz(5);save();render()};
-      li.querySelector(".more").onclick=()=>openSheet("edit",it);
-      ul.appendChild(li);
-    }
+    for(const it of vis)ul.appendChild(row(it));
     sec.appendChild(ul);list.appendChild(sec);
   }
   if(!shown)list.innerHTML=`<p class="empty">${filter==="done"?"Nada marcado ainda.":filter==="todo"?"Tudo pego! Pode ir pro caixa.":"Lista vazia. Toque em Adicionar itens."}</p>`;
+  freshIds.clear();
+  updateCounts(false);
+}
+
+function row(it){
+  const li=document.createElement("li");
+  if(it.done)li.classList.add("done");
+  if(freshIds.has(it.id))li.classList.add("enter");
+  li.innerHTML=`<label><input type="checkbox" id="chk-${it.id}" ${it.done?"checked":""}><span class="name"><span class="txt"></span></span></label>
+    <div class="qty"><button type="button" aria-label="Diminuir quantidade" ${it.qty<=1?"disabled":""}>−</button><output aria-live="polite">${it.qty}</output><button type="button" aria-label="Aumentar quantidade">+</button></div>
+    <button class="more" type="button">${dots}</button>`;
+  li.querySelector(".txt").textContent=it.name;
+  li.querySelector(".more").setAttribute("aria-label",`Editar ${it.name}`);
+  const out=li.querySelector("output"), [m,p]=li.querySelectorAll(".qty button");
+
+  li.querySelector("input").onchange=e=>{
+    it.done=e.target.checked;save();
+    li.classList.toggle("done",it.done);
+    if(it.done){replay(li,"pop");buzz(15)}else{li.classList.remove("pop");buzz(8)}
+    const complete=updateCounts(true);
+    if(it.done&&complete){celebrate();toast("Tudo pego! Pode ir pro caixa.")}
+    // Em "Faltam" / "Já peguei" o item sai da vista com uma animação curta
+    if(filter!=="all")leave(li);
+  };
+  const setQty=(n,dir)=>{
+    it.qty=n;save();out.textContent=n;m.disabled=n<=1;
+    out.classList.remove("up","down");void out.offsetWidth;out.classList.add(dir);buzz(5);
+  };
+  m.onclick=()=>{if(it.qty>1)setQty(it.qty-1,"down")};
+  p.onclick=()=>setQty(it.qty+1,"up");
+  li.querySelector(".more").onclick=()=>openSheet("edit",it);
+  return li;
+}
+
+function leave(li,then){
+  const go=()=>{
+    const ul=li.parentElement;li.remove();
+    if(ul&&!ul.children.length)render();
+    then&&then();
+  };
+  if(reduced.matches||!li.animate){go();return}
+  const h=li.offsetHeight;li.style.overflow="hidden";
+  setTimeout(()=>{
+    li.animate([{opacity:1,transform:"none",height:h+"px"},{opacity:0,transform:"translateX(40px)",height:h+"px",offset:.6},{opacity:0,height:"0px",minHeight:"0px",paddingTop:"0px",paddingBottom:"0px"}],
+      {duration:380,easing:"ease-in"}).finished.then(go);
+  },350);
+}
+
+/* Confete quando tudo foi pego */
+function celebrate(){
+  if(reduced.matches)return;
+  const colors=["var(--accent)","var(--tag)","#ff7a6b","#5aa9ff","#c08cff"];
+  for(let k=0;k<70;k++){
+    const d=document.createElement("i");d.className="confetti";
+    d.style.left=Math.random()*100+"vw";d.style.background=colors[k%colors.length];
+    document.body.appendChild(d);
+    const x=(Math.random()-.5)*160, r=Math.random()*720-360, t=1400+Math.random()*1400;
+    d.animate([{transform:"translate(0,0) rotate(0)",opacity:1},{transform:`translate(${x}px,${innerHeight+40}px) rotate(${r}deg)`,opacity:.9}],
+      {duration:t,delay:Math.random()*300,easing:"cubic-bezier(.2,.6,.4,1)",fill:"forwards"}).finished.then(()=>d.remove());
+  }
+  buzz([20,40,20]);
 }
 
 const fb={all:"f-all",todo:"f-todo",done:"f-done"};
@@ -373,8 +475,8 @@ $("sheetForm").addEventListener("submit",e=>{
     let added=0,bumped=0;
     for(const n of names){
       const ex=items.find(i=>same(i.name,n));
-      if(ex){ex.qty++;ex.done=false;bumped++}
-      else{items.push({id:++uid,name:n,cat,qty:1,done:false});added++}
+      if(ex){ex.qty++;ex.done=false;freshIds.add(ex.id);bumped++}
+      else{items.push({id:++uid,name:n,cat,qty:1,done:false});freshIds.add(uid);added++}
     }
     save();render();closeSheet();buzz(10);
     const parts=[];
