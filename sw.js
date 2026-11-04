@@ -1,5 +1,5 @@
 // Service worker da Lista do Mercado — funciona offline
-const VERSION = "v1";
+const VERSION = "v2";
 const CORE = `core-${VERSION}`;
 const FONTS = "fonts";
 const ASSETS = ["/", "/index.html", "/manifest.webmanifest", "/icons/icon-192.png", "/icons/icon-512.png",

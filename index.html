@@ -2,12 +2,10 @@
 <html lang="pt-BR">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content">
 <title>Lista do Mercado</title>
-<meta name="description" content="Lista de compras do mercado com quantidades e marcação do que já foi pego. Funciona offline.">
-<meta name="theme-color" content="#eef3ef" media="(prefers-color-scheme: light)">
-<meta name="theme-color" content="#0f1916" media="(prefers-color-scheme: dark)">
-<meta name="color-scheme" content="light dark">
+<meta name="description" content="Lista de compras do mercado com quantidades, categorias e marcação do que já foi pego. Funciona offline.">
+<meta name="theme-color" id="themeColor" content="#eef3ef">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
@@ -16,37 +14,58 @@
 <link rel="manifest" href="/manifest.webmanifest">
 <link rel="icon" type="image/png" sizes="32x32" href="/icons/favicon-32.png">
 <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
+<script>
+/* Aplica o tema antes de desenhar a página (evita piscar) */
+(function(){var t=null;try{t=localStorage.getItem("tema")}catch(e){}
+var dark=t?t==="dark":matchMedia("(prefers-color-scheme: dark)").matches;
+if(t)document.documentElement.dataset.theme=t;
+document.getElementById("themeColor").content=dark?"#0f1916":"#eef3ef";})();
+</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Figtree:wght@400;500;600;700&display=swap">
 <style>
-/* Layout: coluna única estilo carrinho; cabeçalho fixo com progresso; barra de adicionar fixa embaixo, no alcance do polegar */
+/* Layout: coluna única estilo carrinho; cabeçalho fixo com progresso; botão de adicionar fixo embaixo, no alcance do polegar; painel inferior para adicionar/editar */
 :root{
   --bg:#eef3ef; --surface:#ffffff; --ink:#15302a; --muted:#5f736d; --line:#d6e1db;
   --accent:#0f7a5a; --accent-ink:#ffffff; --tag:#ffd84d; --tag-ink:#3a2f00; --done:#9aaba5; --danger:#c0392b;
+  --scrim:rgba(10,25,20,.45); --shadow:rgba(10,30,24,.18);
   --display:"Bricolage Grotesque",ui-rounded,"Segoe UI",system-ui,sans-serif;
   --body:"Figtree",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
   --gutter-l:max(16px,env(safe-area-inset-left,0px)); --gutter-r:max(16px,env(safe-area-inset-right,0px));
   color-scheme:light;
 }
-@media (prefers-color-scheme: dark){:root{
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
   --bg:#0f1916; --surface:#172420; --ink:#e4efea; --muted:#93a8a1; --line:#26372f;
-  --accent:#3fc496; --accent-ink:#06231a; --tag:#e9c43a; --tag-ink:#2a2200; --done:#5d716a; --danger:#ff7a6b; color-scheme:dark}}
+  --accent:#3fc496; --accent-ink:#06231a; --tag:#e9c43a; --tag-ink:#2a2200; --done:#5d716a; --danger:#ff7a6b;
+  --scrim:rgba(0,0,0,.6); --shadow:rgba(0,0,0,.5); color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0f1916; --surface:#172420; --ink:#e4efea; --muted:#93a8a1; --line:#26372f;
+  --accent:#3fc496; --accent-ink:#06231a; --tag:#e9c43a; --tag-ink:#2a2200; --done:#5d716a; --danger:#ff7a6b;
+  --scrim:rgba(0,0,0,.6); --shadow:rgba(0,0,0,.5); color-scheme:dark}
 
+[hidden]{display:none!important}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
 body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--body);font-size:16px;line-height:1.4;
-  min-height:100dvh;overscroll-behavior-y:contain}
-button,input,select{font:inherit;color:inherit;touch-action:manipulation}
+  min-height:100dvh;overscroll-behavior-y:contain;transition:background-color .25s,color .25s}
+body.locked{overflow:hidden}
+button,input,select,textarea{font:inherit;color:inherit;touch-action:manipulation}
 button{cursor:pointer}
 :focus-visible{outline:3px solid var(--accent);outline-offset:2px}
 .wrap{max-width:640px;margin:0 auto;padding-left:var(--gutter-l);padding-right:var(--gutter-r)}
 
-header{position:sticky;top:0;z-index:5;background:var(--bg);padding-top:env(safe-area-inset-top,0px)}
+header{position:sticky;top:0;z-index:5;background:var(--bg);padding-top:env(safe-area-inset-top,0px);transition:background-color .25s}
 header .wrap{display:grid;gap:12px;padding-block:16px 12px}
-.top{display:flex;align-items:center;justify-content:space-between;gap:12px}
-h1{font-family:var(--display);font-weight:800;font-size:clamp(1.7rem,7vw,2.4rem);line-height:1;margin:0;letter-spacing:-.02em}
-.count{font-variant-numeric:tabular-nums;font-weight:700;background:var(--tag);color:var(--tag-ink);padding:6px 10px;border-radius:6px;font-size:.9rem;white-space:nowrap;transform:rotate(-2deg)}
+.top{display:flex;align-items:center;gap:10px}
+h1{font-family:var(--display);font-weight:800;font-size:clamp(1.6rem,7vw,2.4rem);line-height:1;margin:0;letter-spacing:-.02em;flex:1;min-width:0}
+.count{font-variant-numeric:tabular-nums;font-weight:700;background:var(--tag);color:var(--tag-ink);padding:6px 10px;border-radius:6px;font-size:.88rem;white-space:nowrap;transform:rotate(-2deg)}
+.theme{flex:none;width:42px;height:42px;border-radius:12px;border:1.5px solid var(--line);background:var(--surface);display:grid;place-items:center;color:var(--ink)}
+.theme svg{width:20px;height:20px}
+.theme .sun{display:none}
+:root[data-theme="dark"] .theme .sun{display:block}
+:root[data-theme="dark"] .theme .moon{display:none}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .theme .sun{display:block}:root:not([data-theme="light"]) .theme .moon{display:none}}
 .bar{height:8px;background:var(--line);border-radius:99px;overflow:hidden}
 .bar span{display:block;height:100%;width:0;background:var(--accent);transition:width .3s}
 .tools{display:flex;gap:8px;overflow-x:auto;scrollbar-width:none;margin-inline:calc(var(--gutter-l) * -1) calc(var(--gutter-r) * -1);padding-inline:var(--gutter-l) var(--gutter-r)}
@@ -54,19 +73,22 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(1.7rem,7vw,2.4rem)
 .chip{flex:none;min-height:40px;border:1.5px solid var(--line);background:var(--surface);border-radius:99px;padding:8px 16px;font-size:.92rem;font-weight:600}
 .chip[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
 .chip.ghost{background:transparent}
+.chip.new{border-style:dashed;color:var(--accent);background:transparent}
+.chip.new[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink);border-color:var(--accent);border-style:solid}
 .confirm{display:flex;gap:8px;align-items:center;flex-wrap:wrap;font-size:.95rem;font-weight:500}
 
 .install{display:flex;align-items:center;gap:12px;background:var(--surface);border:1.5px dashed var(--accent);border-radius:14px;padding:12px 14px;margin-top:8px;font-size:.92rem}
 .install p{margin:0;flex:1;min-width:0}
 .install .go{background:var(--accent);color:var(--accent-ink);border:0;border-radius:10px;padding:10px 14px;font-weight:700;min-height:44px}
-.install .x{border:0;background:transparent;color:var(--muted);width:36px;height:36px;font-size:1.3rem}
+.x{border:0;background:transparent;color:var(--muted);width:40px;height:40px;font-size:1.4rem;border-radius:10px;flex:none}
 
-main{padding-bottom:calc(110px + env(safe-area-inset-bottom,0px))}
-section{margin-top:22px}
-h2{font-family:var(--display);font-weight:600;font-size:.8rem;text-transform:uppercase;letter-spacing:.12em;color:var(--muted);margin:0 0 8px;display:flex;justify-content:space-between}
-h2 small{font-family:var(--body);font-variant-numeric:tabular-nums;letter-spacing:0}
+main{padding-bottom:calc(100px + env(safe-area-inset-bottom,0px))}
+.cat{margin-top:22px}
+.cat h2{font-family:var(--display);font-weight:600;font-size:.8rem;text-transform:uppercase;letter-spacing:.12em;color:var(--muted);margin:0 0 8px;display:flex;justify-content:space-between;gap:12px}
+.cat h2 span{overflow-wrap:anywhere}
+.cat h2 small{font-family:var(--body);font-variant-numeric:tabular-nums;letter-spacing:0;flex:none}
 ul{list-style:none;margin:0;padding:0;background:var(--surface);border:1px solid var(--line);border-radius:14px;overflow:hidden}
-li{display:flex;align-items:center;gap:8px;padding:6px 6px 6px 12px;border-top:1px solid var(--line);min-height:58px}
+li{display:flex;align-items:center;gap:6px;padding:6px 4px 6px 12px;border-top:1px solid var(--line);min-height:58px}
 li:first-child{border-top:0}
 li label{flex:1;display:flex;align-items:center;gap:12px;min-width:0;cursor:pointer;min-height:46px;-webkit-user-select:none;user-select:none}
 li input[type=checkbox]{appearance:none;-webkit-appearance:none;width:28px;height:28px;flex:none;border:2px solid var(--muted);border-radius:8px;display:grid;place-items:center;margin:0;cursor:pointer;transition:background .15s,border-color .15s}
@@ -81,23 +103,46 @@ li.done .name{color:var(--done);text-decoration:line-through}
 .qty button:disabled{color:var(--done);cursor:default}
 .qty output{min-width:24px;text-align:center;font-variant-numeric:tabular-nums;font-weight:700}
 li.done .qty{opacity:.55}
-.del{border:0;background:transparent;color:var(--muted);width:40px;height:40px;border-radius:10px;font-size:1.3rem;flex:none}
-.del:hover,.del:active{color:var(--danger)}
+.more{border:0;background:transparent;color:var(--muted);width:36px;height:40px;border-radius:10px;flex:none;display:grid;place-items:center}
+.more svg{width:20px;height:20px}
 .empty{color:var(--muted);text-align:center;padding:48px 0}
 
 .addbar{position:fixed;left:0;right:0;bottom:0;z-index:6;background:var(--bg);border-top:1px solid var(--line);
-  padding-bottom:calc(10px + env(safe-area-inset-bottom,0px))}
-.addbar form{display:flex;gap:8px;padding-top:10px}
-.addbar input,.addbar select{font-size:16px;background:var(--surface);border:1.5px solid var(--line);border-radius:12px;padding:0 12px;height:46px;min-width:0}
-.addbar input{flex:1 1 auto}
-.addbar select{flex:0 1 38%;max-width:170px}
-.addbar button{flex:none;width:46px;height:46px;background:var(--accent);color:var(--accent-ink);border:0;border-radius:12px;font-size:1.6rem;font-weight:700;line-height:1}
+  padding-top:10px;padding-bottom:calc(10px + env(safe-area-inset-bottom,0px));transition:background-color .25s}
+.addbar button{width:100%;height:52px;display:flex;align-items:center;justify-content:center;gap:10px;background:var(--accent);color:var(--accent-ink);border:0;border-radius:14px;font-weight:700;font-size:1.05rem}
+.addbar button b{font-size:1.5rem;line-height:1;font-weight:700}
 
-.toast{position:fixed;left:50%;bottom:calc(84px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);z-index:7;
+/* Painel inferior */
+.scrim{position:fixed;inset:0;z-index:20;background:var(--scrim)}
+.sheet{position:fixed;left:0;right:0;bottom:var(--kb,0px);z-index:21;margin:0 auto;max-width:640px;max-height:calc(92dvh - var(--kb,0px));overflow-y:auto;overscroll-behavior:contain;
+  background:var(--surface);border-radius:20px 20px 0 0;box-shadow:0 -8px 30px var(--shadow);
+  padding:8px var(--gutter-r) calc(16px + env(safe-area-inset-bottom,0px)) var(--gutter-l);animation:up .22s ease-out}
+@keyframes up{from{transform:translateY(40px);opacity:.4}to{transform:none;opacity:1}}
+.grab{width:40px;height:5px;border-radius:9px;background:var(--line);margin:0 auto 6px}
+.sheet-head{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.sheet h3{font-family:var(--display);font-weight:800;font-size:1.4rem;margin:0;letter-spacing:-.01em}
+.sheet form{display:grid;gap:16px;margin-top:8px}
+.field{display:grid;gap:6px}
+.field>label,.sheet legend{font-size:.78rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--muted)}
+.sheet textarea,.sheet input{width:100%;font-size:16px;background:var(--bg);border:1.5px solid var(--line);border-radius:12px;padding:12px;min-width:0}
+.sheet textarea{resize:vertical;min-height:110px;line-height:1.5}
+.sheet [aria-invalid="true"]{border-color:var(--danger)}
+.hint{margin:0;font-size:.85rem;color:var(--muted)}
+.err{margin:0;font-size:.85rem;color:var(--danger);font-weight:600}
+.sheet fieldset{border:0;margin:0;padding:0;display:grid;gap:8px;min-width:0}
+.cats{display:flex;flex-wrap:wrap;gap:8px}
+.cats .chip{max-width:100%;overflow-wrap:anywhere;text-align:left}
+.actions{display:flex;gap:10px}
+.primary{flex:1;height:52px;background:var(--accent);color:var(--accent-ink);border:0;border-radius:14px;font-weight:700;font-size:1.05rem}
+.primary:disabled{opacity:.5;cursor:default}
+.danger{height:52px;padding:0 18px;background:transparent;color:var(--danger);border:1.5px solid var(--danger);border-radius:14px;font-weight:700}
+
+.toast{position:fixed;left:50%;bottom:calc(80px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);z-index:30;
   display:flex;align-items:center;gap:14px;background:var(--ink);color:var(--bg);border-radius:12px;padding:10px 10px 10px 16px;
-  font-weight:500;max-width:calc(100% - 32px);box-shadow:0 6px 20px rgba(0,0,0,.18)}
-.toast button{border:0;background:transparent;color:var(--tag);font-weight:700;padding:8px 10px;min-height:40px}
-@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+  font-weight:500;width:max-content;max-width:calc(100% - 32px);box-shadow:0 6px 20px var(--shadow)}
+.toast span{min-width:0;overflow-wrap:anywhere}
+.toast button{border:0;background:transparent;color:var(--tag);font-weight:700;padding:8px 10px;min-height:40px;flex:none}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
 </style>
 </head>
 <body>
@@ -106,6 +151,10 @@ li.done .qty{opacity:.55}
     <div class="top">
       <h1>Lista do Mercado</h1>
       <span class="count" id="count">0/0</span>
+      <button class="theme" id="themeBtn" type="button" aria-label="Alternar modo claro e escuro">
+        <svg class="moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>
+        <svg class="sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="4.5"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
+      </button>
     </div>
     <div class="bar" aria-hidden="true"><span id="bar"></span></div>
     <div class="tools" role="toolbar" aria-label="Filtros">
@@ -132,37 +181,88 @@ li.done .qty{opacity:.55}
 </main>
 
 <div class="addbar">
-  <div class="wrap">
-    <form id="addForm" autocomplete="off">
-      <input id="newName" placeholder="Adicionar item…" aria-label="Nome do item" enterkeyhint="done" autocapitalize="sentences">
-      <select id="newCat" aria-label="Categoria"></select>
-      <button type="submit" aria-label="Adicionar item">+</button>
-    </form>
+  <div class="wrap"><button type="button" id="openAdd"><b>+</b> Adicionar itens</button></div>
+</div>
+
+<div class="scrim" id="scrim" hidden></div>
+<div class="sheet" id="sheet" role="dialog" aria-modal="true" aria-labelledby="sheetTitle" hidden>
+  <div class="grab" aria-hidden="true"></div>
+  <div class="sheet-head">
+    <h3 id="sheetTitle">Adicionar itens</h3>
+    <button class="x" type="button" id="sheetClose" aria-label="Fechar">×</button>
   </div>
+  <form id="sheetForm" novalidate>
+    <div class="field" id="addFields">
+      <label for="newItems">Itens</label>
+      <textarea id="newItems" rows="4" placeholder="Um item por linha&#10;Ex.: Café&#10;Feijão&#10;Ventilador" autocapitalize="sentences"></textarea>
+      <p class="hint">Escreva um por linha ou separe por vírgula.</p>
+    </div>
+    <div class="field" id="editFields" hidden>
+      <label for="editName">Nome do item</label>
+      <input id="editName" autocapitalize="sentences" enterkeyhint="done">
+    </div>
+    <fieldset>
+      <legend>Categoria</legend>
+      <div class="cats" id="catChips"></div>
+      <div class="field" id="newCatRow" hidden>
+        <label for="newCatName" class="hint" style="text-transform:none;letter-spacing:0;font-weight:500">Nome da nova categoria</label>
+        <input id="newCatName" placeholder="Ex.: Eletrodomésticos" autocapitalize="sentences" enterkeyhint="done">
+      </div>
+    </fieldset>
+    <p class="err" id="sheetErr" hidden></p>
+    <div class="actions">
+      <button type="button" class="danger" id="sheetDelete" hidden>Remover</button>
+      <button type="submit" class="primary" id="sheetSubmit">Adicionar</button>
+    </div>
+  </form>
 </div>
 
 <div class="toast" id="toast" role="status" hidden><span id="toastMsg"></span><button id="toastBtn" type="button"></button></div>
 
 <script>
 const DEFAULT = {
-  "Comida":["Arroz","Macarrão parafuso","Farofa","Tomate","Pipoca de micro-ondas","Açúcar","Milho","Creme de leite","Leite condensado","Ketchup","Ervilha","Bisnaguinha","Caldo de feijão","Leite"],
+  "Comida":["Arroz","Macarrão parafuso","Farofa","Tomate","Pipoca de micro-ondas","Açúcar","Milho","Creme de leite","Leite condensado","Ketchup","Ervilha","Bisnaguinha","Saco de feijão","Leite"],
   "Açougue":["Frango a passarinho","Frango tulipa","Filé de frango","Óleo","Linguiça","Calabresa","Salsicha","Hambúrguer","Nuggets","Lasanha","Batata frita","Pão de queijo"],
   "Frutas":["Manga","Uva"],
   "Outros alimentos":["Bolachas","Danone","Guloseimas","Sorvete"],
-  "Higiene e limpeza":["Cibervente","Papel higiênico","Desinfetante","Sabão líquido","Cândida","Sabonete","Pasta de dente","Esponja","Veja rosinha","Luva","Álcool"],
+  "Higiene e limpeza":["Detergente","Papel higiênico","Desinfetante","Sabão líquido","Cândida","Sabonete","Pasta de dente","Esponja","Veja (Rosinha)","Luva","Álcool"],
   "Bebidas":["Refrigerante","Del Valle"]
 };
+const RENAMES={"Cibervente":"Detergente","Veja rosinha":"Veja (Rosinha)","Caldo de feijão":"Saco de feijão"};
 const KEY="lista-mercado-v1";
 const $=id=>document.getElementById(id);
+const same=(a,b)=>a.trim().toLocaleLowerCase("pt-BR")===b.trim().toLocaleLowerCase("pt-BR");
 let uid=0;
-function fresh(){const items=[];for(const c in DEFAULT)DEFAULT[c].forEach(n=>items.push({id:++uid,name:n,cat:c,qty:1,done:false}));return items}
-function load(){try{const s=JSON.parse(localStorage.getItem(KEY));if(s&&Array.isArray(s.items)){uid=Math.max(0,...s.items.map(i=>i.id));return s.items}}catch(e){}return fresh()}
-function save(){try{localStorage.setItem(KEY,JSON.stringify({items}))}catch(e){}}
-const buzz=ms=>{try{navigator.vibrate&&navigator.vibrate(ms)}catch(e){}};
-let items=load(), filter="all";
-const cats=()=>[...new Set([...Object.keys(DEFAULT),...items.map(i=>i.cat)])];
-cats().forEach(c=>$("newCat").add(new Option(c,c)));
 
+function fresh(){const items=[];for(const c in DEFAULT)DEFAULT[c].forEach(n=>items.push({id:++uid,name:n,cat:c,qty:1,done:false}));return items}
+function load(){
+  try{const s=JSON.parse(localStorage.getItem(KEY));
+    if(s&&Array.isArray(s.items)){
+      s.items.forEach(i=>{if(RENAMES[i.name])i.name=RENAMES[i.name]});
+      uid=Math.max(0,...s.items.map(i=>i.id));
+      const cats=Array.isArray(s.cats)?s.cats:[...new Set([...Object.keys(DEFAULT),...s.items.map(i=>i.cat)])];
+      return {items:s.items,cats};
+    }}catch(e){}
+  return {items:fresh(),cats:Object.keys(DEFAULT)};
+}
+let {items,cats}=load(), filter="all";
+function save(){try{localStorage.setItem(KEY,JSON.stringify({items,cats}))}catch(e){}}
+/* Categorias criadas por você somem quando ficam vazias; as padrão ficam */
+function prune(){cats=cats.filter(c=>c in DEFAULT||items.some(i=>i.cat===c))}
+const buzz=ms=>{try{navigator.vibrate&&navigator.vibrate(ms)}catch(e){}};
+save();
+
+/* ---------- Tema ---------- */
+const mq=matchMedia("(prefers-color-scheme: dark)");
+const isDark=()=>{const t=document.documentElement.dataset.theme;return t?t==="dark":mq.matches};
+function paintMeta(){$("themeColor").content=isDark()?"#0f1916":"#eef3ef"}
+$("themeBtn").onclick=()=>{
+  const t=isDark()?"light":"dark";document.documentElement.dataset.theme=t;
+  try{localStorage.setItem("tema",t)}catch(e){}paintMeta();buzz(5);
+};
+mq.addEventListener?.("change",paintMeta);
+
+/* ---------- Aviso rápido ---------- */
 let toastTimer;
 function toast(msg,label,fn){
   $("toastMsg").textContent=msg;const b=$("toastBtn");b.hidden=!label;b.textContent=label||"";
@@ -170,17 +270,20 @@ function toast(msg,label,fn){
   clearTimeout(toastTimer);toastTimer=setTimeout(()=>$("toast").hidden=true,5000);
 }
 
+/* ---------- Lista ---------- */
+const dots=`<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="12" cy="5" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="12" cy="19" r="2"/></svg>`;
 function render(){
   const list=$("list");list.innerHTML="";
   const done=items.filter(i=>i.done).length;
-  $("count").textContent=`${done}/${items.length} no carrinho`;
+  $("count").textContent=`${done}/${items.length}`;
+  $("count").setAttribute("aria-label",`${done} de ${items.length} itens no carrinho`);
   $("bar").style.width=items.length?(done/items.length*100)+"%":"0";
   let shown=0;
-  for(const c of cats()){
+  for(const c of cats){
     const all=items.filter(i=>i.cat===c);
     const vis=all.filter(i=>filter==="all"||(filter==="done"?i.done:!i.done)).sort((a,b)=>a.done-b.done);
     if(!vis.length)continue;shown+=vis.length;
-    const sec=document.createElement("section");
+    const sec=document.createElement("section");sec.className="cat";
     const h=document.createElement("h2");h.innerHTML=`<span></span><small>${all.filter(i=>i.done).length}/${all.length}</small>`;
     h.firstChild.textContent=c;sec.appendChild(h);
     const ul=document.createElement("ul");
@@ -188,39 +291,122 @@ function render(){
       const li=document.createElement("li");if(it.done)li.className="done";
       li.innerHTML=`<label><input type="checkbox" id="chk-${it.id}" ${it.done?"checked":""}><span class="name"></span></label>
         <div class="qty"><button type="button" aria-label="Diminuir quantidade" ${it.qty<=1?"disabled":""}>−</button><output aria-live="polite">${it.qty}</output><button type="button" aria-label="Aumentar quantidade">+</button></div>
-        <button class="del" type="button" aria-label="Remover ${it.name.replace(/"/g,"")}">×</button>`;
+        <button class="more" type="button">${dots}</button>`;
       li.querySelector(".name").textContent=it.name;
+      li.querySelector(".more").setAttribute("aria-label",`Editar ${it.name}`);
       li.querySelector("input").onchange=e=>{it.done=e.target.checked;buzz(it.done?15:8);save();render()};
       const [m,p]=li.querySelectorAll(".qty button");
       m.onclick=()=>{if(it.qty>1){it.qty--;buzz(5);save();render()}};
       p.onclick=()=>{it.qty++;buzz(5);save();render()};
-      li.querySelector(".del").onclick=()=>{
-        const idx=items.indexOf(it);items.splice(idx,1);save();render();
-        toast(`"${it.name}" removido`,"Desfazer",()=>{items.splice(idx,0,it);save();render()});
-      };
+      li.querySelector(".more").onclick=()=>openSheet("edit",it);
       ul.appendChild(li);
     }
     sec.appendChild(ul);list.appendChild(sec);
   }
-  if(!shown)list.innerHTML=`<p class="empty">${filter==="done"?"Nada marcado ainda.":filter==="todo"?"Tudo pego! Pode ir pro caixa.":"Lista vazia. Adicione um item abaixo."}</p>`;
+  if(!shown)list.innerHTML=`<p class="empty">${filter==="done"?"Nada marcado ainda.":filter==="todo"?"Tudo pego! Pode ir pro caixa.":"Lista vazia. Toque em Adicionar itens."}</p>`;
 }
 
 const fb={all:"f-all",todo:"f-todo",done:"f-done"};
-for(const k in fb)$(fb[k]).onclick=()=>{filter=k;for(const j in fb)$(fb[j]).setAttribute("aria-pressed",j===k);render();window.scrollTo({top:0})};
+function setFilter(k){filter=k;for(const j in fb)$(fb[j]).setAttribute("aria-pressed",j===k)}
+for(const k in fb)$(fb[k]).onclick=()=>{setFilter(k);render();scrollTo({top:0})};
 $("reset").onclick=()=>{$("confirmBox").hidden=false};
 $("no").onclick=()=>{$("confirmBox").hidden=true};
 $("yes").onclick=()=>{items.forEach(i=>i.done=false);$("confirmBox").hidden=true;save();render();toast("Lista desmarcada")};
-$("addForm").addEventListener("submit",e=>{
-  e.preventDefault();const inp=$("newName");const n=inp.value.trim();if(!n)return;
-  const ex=items.find(i=>i.name.toLowerCase()===n.toLowerCase());
-  if(ex){ex.qty++;ex.done=false;toast(`"${ex.name}" já estava na lista: agora ${ex.qty}`)}
-  else{items.push({id:++uid,name:n,cat:$("newCat").value,qty:1,done:false});toast(`"${n}" adicionado em ${$("newCat").value}`)}
-  inp.value="";save();render();
+
+/* ---------- Painel de adicionar / editar ---------- */
+let mode="add", editing=null, selCat=null, lastFocus=null;
+const NEW="__nova__";
+function parseNames(){return $("newItems").value.split(/[\n,;]+/).map(s=>s.trim()).filter(Boolean)}
+function renderChips(){
+  const box=$("catChips");box.innerHTML="";
+  for(const c of cats){
+    const b=document.createElement("button");b.type="button";b.className="chip";b.textContent=c;
+    b.setAttribute("aria-pressed",selCat===c);b.onclick=()=>pick(c);box.appendChild(b);
+  }
+  const n=document.createElement("button");n.type="button";n.className="chip new";n.textContent="+ Nova categoria";
+  n.setAttribute("aria-pressed",selCat===NEW);n.onclick=()=>pick(NEW);box.appendChild(n);
+}
+function pick(c){selCat=c;$("newCatRow").hidden=c!==NEW;renderChips();clearErr();if(c===NEW)$("newCatName").focus();updateBtn()}
+function updateBtn(){
+  if(mode==="edit"){$("sheetSubmit").textContent="Salvar";return}
+  const n=parseNames().length;
+  $("sheetSubmit").textContent=n>1?`Adicionar ${n} itens`:"Adicionar";
+}
+function err(msg,el){$("sheetErr").textContent=msg;$("sheetErr").hidden=false;if(el){el.setAttribute("aria-invalid","true");el.focus()}}
+function clearErr(){$("sheetErr").hidden=true;document.querySelectorAll("[aria-invalid]").forEach(e=>e.removeAttribute("aria-invalid"))}
+
+function openSheet(m,it){
+  mode=m;editing=it||null;lastFocus=document.activeElement;clearErr();
+  $("sheetTitle").textContent=m==="edit"?"Editar item":"Adicionar itens";
+  $("addFields").hidden=m==="edit";$("editFields").hidden=m!=="edit";$("sheetDelete").hidden=m!=="edit";
+  $("newCatName").value="";$("newCatRow").hidden=true;
+  if(m==="edit"){$("editName").value=it.name;selCat=it.cat}
+  else{$("newItems").value="";if(!cats.includes(selCat))selCat=cats[0]||NEW;if(selCat===NEW)$("newCatRow").hidden=false}
+  renderChips();updateBtn();
+  $("scrim").hidden=false;$("sheet").hidden=false;document.body.classList.add("locked");
+  setTimeout(()=>(m==="edit"?$("editName"):$("newItems")).focus(),60);
+}
+function closeSheet(){
+  $("scrim").hidden=true;$("sheet").hidden=true;document.body.classList.remove("locked");
+  document.documentElement.style.setProperty("--kb","0px");lastFocus&&lastFocus.focus?.();
+}
+$("openAdd").onclick=()=>openSheet("add");
+$("sheetClose").onclick=closeSheet;$("scrim").onclick=closeSheet;
+addEventListener("keydown",e=>{if(e.key==="Escape"&&!$("sheet").hidden)closeSheet()});
+$("newItems").addEventListener("input",()=>{clearErr();updateBtn()});
+$("newCatName").addEventListener("input",clearErr);
+
+function resolveCat(){
+  if(selCat!==NEW)return selCat;
+  const name=$("newCatName").value.trim().replace(/\s+/g," ");
+  if(!name){err("Dê um nome para a nova categoria.",$("newCatName"));return null}
+  const ex=cats.find(c=>same(c,name));
+  if(ex)return ex;
+  cats.push(name);return name;
+}
+$("sheetForm").addEventListener("submit",e=>{
+  e.preventDefault();clearErr();
+  if(mode==="add"){
+    const names=parseNames();
+    if(!names.length){err("Escreva pelo menos um item.",$("newItems"));return}
+    const cat=resolveCat();if(!cat)return;
+    let added=0,bumped=0;
+    for(const n of names){
+      const ex=items.find(i=>same(i.name,n));
+      if(ex){ex.qty++;ex.done=false;bumped++}
+      else{items.push({id:++uid,name:n,cat,qty:1,done:false});added++}
+    }
+    save();render();closeSheet();buzz(10);
+    const parts=[];
+    if(added)parts.push(`${added} ${added>1?"itens adicionados":"item adicionado"} em ${cat}`);
+    if(bumped)parts.push(`${bumped} já ${bumped>1?"estavam":"estava"} na lista (+1)`);
+    toast(parts.join(" · "));
+  }else{
+    const name=$("editName").value.trim();
+    if(!name){err("O item precisa de um nome.",$("editName"));return}
+    const cat=resolveCat();if(!cat)return;
+    const moved=editing.cat!==cat;
+    editing.name=name;editing.cat=cat;prune();save();render();closeSheet();
+    toast(moved?`"${name}" movido para ${cat}`:"Item salvo");
+  }
 });
-// Sincroniza entre abas abertas
-addEventListener("storage",e=>{if(e.key===KEY){items=load();render()}});
+$("sheetDelete").onclick=()=>{
+  const it=editing,idx=items.indexOf(it),prevCats=[...cats];
+  items.splice(idx,1);prune();save();render();closeSheet();
+  toast(`"${it.name}" removido`,"Desfazer",()=>{items.splice(idx,0,it);cats=prevCats;save();render()});
+};
+
+/* Mantém o painel acima do teclado no celular */
+if(window.visualViewport){
+  const fit=()=>{const kb=Math.max(0,innerHeight-visualViewport.height-visualViewport.offsetTop);
+    document.documentElement.style.setProperty("--kb",($("sheet").hidden?0:kb)+"px")};
+  visualViewport.addEventListener("resize",fit);visualViewport.addEventListener("scroll",fit);
+}
+
+/* Sincroniza entre abas abertas */
+addEventListener("storage",e=>{if(e.key===KEY){({items,cats}=load());render()}});
 const qf=new URLSearchParams(location.search).get("f");
-if(fb[qf]){filter=qf;for(const j in fb)$(fb[j]).setAttribute("aria-pressed",j===qf)}
+if(fb[qf])setFilter(qf);
 render();
 
 /* ---------- PWA ---------- */
